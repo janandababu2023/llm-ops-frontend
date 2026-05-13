@@ -61,3 +61,11 @@ Step 8.
     > git remote add origin https://github.com/toolsknowledge/llmops.git
 
     > git push -u origin master
+
+Step 9.
+    create EC2 instance
+
+
+
+
+
