@@ -55,3 +55,24 @@ Step 7.
 
 Step 8.
         push code to repo
+
+Step 9.
+        create EC2 instance
+
+        Note : 20GB+ SSD Required
+
+Step 10.
+        assign Elastic IP (Permanent IP Address)
+        Ex. 13.63.68.207
+
+Step 11.
+        Open the Below Ports
+        8000
+        8080
+        3000
+
+Step 12.
+        update ubuntu (Refresh)
+
+        > sudo apt update -y
+        
