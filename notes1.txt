@@ -63,9 +63,30 @@ Step 8.
     > git push -u origin master
 
 Step 9.
-    create EC2 instance
+    create EC2 instance (llm-rag-project)
+        Note : SSD size >25GB
+
+Step 10.
+        allocate IP Address with the help of ElasticIP
+
+        IP Address : 51.21.24.145
+
+Step 11.
+        Open the below ports
+            8000 (uvicorn)
+            8080 (Jenkins)
+            3000 (ReactJS)
+
+Step 12.
+        connect to EC2 Server (SSH Terminal) and update ubuntu
+
+        > sudo apt update -y
+
+Step 13.
+    install java (Jenkins installation depending on Java)
+
+            https://www.jenkins.io/doc/book/installing/linux/
 
 
-ubuntu@13.63.68.207
 
 
