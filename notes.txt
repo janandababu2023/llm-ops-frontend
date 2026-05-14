@@ -75,4 +75,76 @@ Step 12.
         update ubuntu (Refresh)
 
         > sudo apt update -y
+
+Step 13.
+        install Java
+            Jenkins installation depending on Java
+
+            https://www.jenkins.io/doc/book/installing/linux/
+
+        sudo apt install fontconfig openjdk-21-jre
+        java -version
+
+Step 14.
+        install Jenkins
+
+        sudo wget -O /etc/apt/keyrings/jenkins-keyring.asc \
+  https://pkg.jenkins.io/debian-stable/jenkins.io-2026.key
+echo "deb [signed-by=/etc/apt/keyrings/jenkins-keyring.asc]" \
+  https://pkg.jenkins.io/debian-stable binary/ | sudo tee \
+  /etc/apt/sources.list.d/jenkins.list > /dev/null
+sudo apt update
+sudo apt install jenkins
+
+Step 15.
+        install docker
+
+        > sudo apt install docker.io -y
+        > docker --version
+
+Step 16.
+    enable permissions
+
+    > sudo usermod -aG docker ubuntu
+    > sudo usermod -aG jenkins ubuntu
+    > sudo usermod -aG docker jenkins
+
+Step 17.
+    restart both jenkins & docker
+
+    > sudo systemctl restart jenkins
+    > sudo systemctl restart docker
+
+Step 18.
+    connect to jenkins
+
+    http://13.63.68.207:8080/
+
+    password : sudo cat /var/lib/jenkins/secrets/initialAdminPassword
+
+Step 19.
+    install Below Plugins
+    1) Git server
+    2) Docker
+    3) Docker Pipeline
+    4) SSH
+    5) SSH Agent
+    6) SSH server
+    7) AWS Credentials
+
+Step 20.
+    https://www.docker.com/products/docker-desktop/?utm_source=chatgpt.com
+    username : excelr
+    password : 
+
+Step 21.
+    configure Credentials in Jenkins
+    1) OPENAI_API_KEY
+    2) EC2_HOST ubuntu@13.63.68.207
+    3) ec2-ssh-key (SSH Username w/ key)
+    4) dockerhub-creds (Username with password)
+
+Step 22.
+    create pipeline
+    
         

@@ -24,8 +24,12 @@ model = SentenceTransformer("all-MiniLM-L6-v2")
 # create the table (collection)
 # client = chromadb.Client()
 # collection = client.create_collection("pdf_data")
-client = chromadb.HttpClient(host="localhost", port=8001)
+# client = chromadb.HttpClient(host="localhost", port=8001)
+# collection = client.get_or_create_collection("pdf_data")
+CHROMA_DIR = os.getenv("CHROMA_DIR", "/app/chroma_data")
+client = chromadb.PersistentClient(path=CHROMA_DIR)
 collection = client.get_or_create_collection("pdf_data")
+
 
 # read pdf file
 def read_pdf(pdf_path):

@@ -66,6 +66,6 @@ Step 9.
     create EC2 instance
 
 
-
+ubuntu@13.63.68.207
 
 
