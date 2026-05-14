@@ -1,3 +1,8 @@
+# CPU-only torch index — avoids pulling 4–5 GB of NVIDIA CUDA libs
+# on an EC2 instance that doesn't have a GPU.
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+torch
 fastapi
 uvicorn[standard]
 langchain
@@ -7,3 +12,14 @@ sentence-transformers
 openai
 python-multipart
 python-dotenv
+
+
+# fastapi
+# uvicorn[standard]
+# langchain
+# chromadb
+# pypdf
+# sentence-transformers
+# openai
+# python-multipart
+# python-dotenv
