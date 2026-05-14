@@ -87,6 +87,65 @@ Step 13.
 
             https://www.jenkins.io/doc/book/installing/linux/
 
+            sudo apt install fontconfig openjdk-21-jre -y
+            java -version
+
+Step 14.
+        install Jenkins
+
+Step 15.
+        install docker
+
+        > sudo apt install docker.io -y
+        > docker --version
+
+Step 16.
+        enable permissions between docker,jenkins and ubuntu
+
+        > sudo usermod -aG jenkins ubuntu
+        > sudo usermod -aG docker ubuntu
+        > sudo usermod -aG docker jenkins
+
+Step 17.
+        restart both Jenkins and Docker
+        > sudo systemctl restart jenkins
+        > sudo systemctl restart docker
+
+Step 18.
+        connect to jenkins
+
+        http://51.21.24.145:8080/
+
+        password: sudo cat /var/lib/jenkins/secrets/initialAdminPassword
+
+Step 19.
+        install below plugins
+        1) Git server
+        2) Docker
+        3) Docker Pipeline
+        4) SSH
+        5) SSH Agent
+        6) AWS Credentials
+
+Step 20.
+        install Docker Desktop
+        URL : https://docs.docker.com/desktop/setup/install/windows-install/
+        username: excelr
+        password:
+
+Step 21.
+        add Credentials in Jenkins
+        1) OPENAI_API_KEY
+        2) EC2_HOST ubuntu@51.21.24.145
+        3) ec2-ssh-key (SSH Username w/ key)
+        4) dockerhub-creds (Username with password)
+
+Step 22.
+        build Pipeline
+
+        end point : http://51.21.24.145:8000/
+
+
 
 
 
