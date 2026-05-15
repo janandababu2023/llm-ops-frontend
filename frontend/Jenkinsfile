@@ -1,0 +1,100 @@
+// ────────────────────────────────────────────────────────────────
+// Jenkinsfile — CI/CD for full-stack LLM RAG Project
+// Trigger:  GitHub webhook on push to master
+// Flow:     Checkout → Build backend + frontend images
+//           → Push both to Docker Hub
+//           → SSH to EC2 → docker-compose pull + up
+// ────────────────────────────────────────────────────────────────
+pipeline {
+    agent any
+
+    environment {
+        BACKEND_IMAGE  = "llm-rag-app"
+        FRONTEND_IMAGE = "llm-rag-frontend"
+        IMAGE_TAG      = "${env.BUILD_NUMBER}"
+        EC2_HOST       = credentials('EC2_HOST')          // ubuntu@<IP>
+        OPENAI_API_KEY = credentials('OPENAI_API_KEY')
+        DOCKERHUB_USER = "excelr"
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                checkout scm
+                echo "Building branch: ${env.BRANCH_NAME ?: 'master'}"
+            }
+        }
+
+        stage('Build Backend Image') {
+            when { anyOf { branch 'master'; expression { env.BRANCH_NAME == null } } }
+            steps {
+                sh '''
+                    docker build -f Dockerfile -t ${BACKEND_IMAGE}:${IMAGE_TAG} .
+                    docker tag ${BACKEND_IMAGE}:${IMAGE_TAG} ${BACKEND_IMAGE}:latest
+                '''
+            }
+        }
+
+        stage('Build Frontend Image') {
+            when { anyOf { branch 'master'; expression { env.BRANCH_NAME == null } } }
+            steps {
+                sh '''
+                    docker build -f frontend/Dockerfile -t ${FRONTEND_IMAGE}:${IMAGE_TAG} ./frontend
+                    docker tag ${FRONTEND_IMAGE}:${IMAGE_TAG} ${FRONTEND_IMAGE}:latest
+                '''
+            }
+        }
+
+        stage('Push to Docker Hub') {
+            when { anyOf { branch 'master'; expression { env.BRANCH_NAME == null } } }
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-creds',
+                    usernameVariable: 'DH_USER',
+                    passwordVariable: 'DH_PASS'
+                )]) {
+                    sh '''
+                        echo "$DH_PASS" | docker login -u "$DH_USER" --password-stdin
+
+                        docker tag ${BACKEND_IMAGE}:latest  $DH_USER/${BACKEND_IMAGE}:latest
+                        docker tag ${FRONTEND_IMAGE}:latest $DH_USER/${FRONTEND_IMAGE}:latest
+
+                        docker push $DH_USER/${BACKEND_IMAGE}:latest
+                        docker push $DH_USER/${FRONTEND_IMAGE}:latest
+
+                        docker logout
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy to EC2') {
+            when { anyOf { branch 'master'; expression { env.BRANCH_NAME == null } } }
+            steps {
+                sshagent(credentials: ['ec2-ssh-key']) {
+                    // First copy the docker-compose.yml file to EC2,
+                    // then run docker compose pull + up.
+                    sh '''
+                        scp -o StrictHostKeyChecking=no docker-compose.yml $EC2_HOST:/home/ubuntu/docker-compose.yml
+
+                        ssh -o StrictHostKeyChecking=no $EC2_HOST "
+                            mkdir -p /home/ubuntu/chroma_data /home/ubuntu/uploads &&
+                            export OPENAI_API_KEY='${OPENAI_API_KEY}' &&
+                            cd /home/ubuntu &&
+                            docker compose pull &&
+                            docker compose up -d --remove-orphans &&
+                            docker image prune -f
+                        "
+                    '''
+                }
+            }
+        }
+    }
+
+    post {
+        success { echo "✅ Build #${env.BUILD_NUMBER} deployed — visit http://<EC2-IP>/" }
+        failure { echo "❌ Build #${env.BUILD_NUMBER} failed — check logs" }
+        always  { sh 'docker image prune -f || true' }
+    }
+}

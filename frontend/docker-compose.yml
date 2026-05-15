@@ -1,0 +1,52 @@
+# ────────────────────────────────────────────────────────────────
+# docker-compose.yml — orchestrates the full stack on EC2
+#
+# Services:
+#   - backend  (FastAPI + ChromaDB + OpenAI)   internal port 8000
+#   - frontend (React + Nginx reverse proxy)   external port 80
+#
+# How to deploy on EC2:
+#   1. Set OPENAI_API_KEY in the shell or in a .env file (same folder)
+#   2. Pull the latest images:
+#        docker compose pull
+#   3. Start everything:
+#        docker compose up -d
+#   4. Visit http://<EC2-PUBLIC-IP>/
+#
+# Notes:
+# - The frontend talks to the backend over Docker's internal network
+#   using the service name "backend" as the hostname (see nginx.conf).
+# - Only port 80 is exposed publicly — port 8000 is NOT exposed,
+#   so the backend is only reachable through Nginx.
+# ────────────────────────────────────────────────────────────────
+
+services:
+  backend:
+    image: excelr/llm-rag-app:latest
+    container_name: llm-rag-backend
+    restart: unless-stopped
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      CHROMA_DIR: /app/chroma_data
+    volumes:
+      - ./chroma_data:/app/chroma_data
+      - ./uploads:/app/uploads
+    expose:
+      - "8000"        # Only visible to other compose services, NOT public
+    networks:
+      - app-net
+
+  frontend:
+    image: excelr/llm-rag-frontend:latest
+    container_name: llm-rag-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"       # Publicly exposed
+    depends_on:
+      - backend
+    networks:
+      - app-net
+
+networks:
+  app-net:
+    driver: bridge

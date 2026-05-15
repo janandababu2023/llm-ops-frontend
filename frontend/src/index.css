@@ -1,0 +1,82 @@
+@import "tailwindcss";
+
+/* ──────────────────────────────────────────────────────────────
+   Design tokens — Tailwind v4 reads these as utility colors.
+   Use them as: bg-brand-600, text-brand-700, etc.
+   ────────────────────────────────────────────────────────────── */
+@theme {
+  --color-brand-50:  #eef2ff;
+  --color-brand-100: #e0e7ff;
+  --color-brand-200: #c7d2fe;
+  --color-brand-400: #818cf8;
+  --color-brand-500: #6366f1;
+  --color-brand-600: #4f46e5;
+  --color-brand-700: #4338ca;
+  --color-brand-800: #3730a3;
+
+  --font-sans: 'Inter', system-ui, sans-serif;
+}
+
+/* Base styles */
+html {
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+body {
+  @apply bg-slate-50 text-slate-900;
+  background-image:
+    radial-gradient(at 20% 0%,   rgba(99, 102, 241, 0.10) 0px, transparent 50%),
+    radial-gradient(at 100% 50%, rgba(139, 92,  246, 0.08) 0px, transparent 50%),
+    radial-gradient(at 0%  100%, rgba(59,  130, 246, 0.08) 0px, transparent 50%);
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+
+/* ──────────────────────────────────────────────────────────────
+   Reusable component classes
+   ────────────────────────────────────────────────────────────── */
+.btn-primary {
+  @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg
+         bg-brand-600 text-white font-medium shadow-sm
+         hover:bg-brand-700 active:scale-[0.98]
+         focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2
+         disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150;
+}
+.btn-secondary {
+  @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg
+         bg-white text-slate-700 font-medium border border-slate-300 shadow-sm
+         hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-brand-500
+         disabled:opacity-50 disabled:cursor-not-allowed transition-all;
+}
+.card {
+  @apply bg-white/80 backdrop-blur-sm rounded-2xl border border-slate-200/70 shadow-sm
+         hover:shadow-md transition-shadow duration-300;
+}
+.input {
+  @apply w-full px-4 py-2.5 rounded-lg border border-slate-300
+         bg-white text-slate-900 placeholder:text-slate-400
+         focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent
+         transition-all;
+}
+
+/* Scrollbar styling */
+.scroll-area::-webkit-scrollbar { width: 6px; }
+.scroll-area::-webkit-scrollbar-track { background: transparent; }
+.scroll-area::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+.scroll-area::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+/* Typing-dot animation */
+@keyframes typing {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30%           { transform: translateY(-6px); opacity: 1; }
+}
+.typing-dot { animation: typing 1.4s infinite; }
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+/* Subtle float-in animation for cards on first render */
+@keyframes float-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-float-in { animation: float-in 0.4s ease-out; }
