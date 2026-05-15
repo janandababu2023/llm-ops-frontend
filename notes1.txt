@@ -145,7 +145,58 @@ Step 22.
 
         end point : http://51.21.24.145:8000/
 
+Step 23.
+        download and install NodeJS
+           NodeJS Required to develop Frontend applications like
+           Ex.React,Angular,VueJS,NextJS,....
 
+        URL : https://nodejs.org/en/download
+        > node --version
+
+
+Step 24.
+        implement frontend application (ReactJS)
+        > llm-rag-project
+        > npm create vite@latest
+          1) application-name : frontend
+          2) Framework : react
+          3) Variant : JavaScript
+          4) Install with npm and start now?
+
+frontend
+********        
+package.json
+        tailwindcss: rich output (look)
+
+        frontend
+             app.js (Bridge Between FastAPI and ReactJS)
+             App.jsx (Component) / (Application)
+             main.jsx (Attach "App" Component to "index.html" file)
+             React starts the execution from "index.html" file
+
+            Dockerfile
+            Jenkinsfile
+            docker-compose.yml
+            nginx.conf
+
+
+1) download zip file from https://github.com/toolsknowledge/llmops.git
+
+
+2) run backend (navigate to backend) (terminal-1)
+     > source venv\bin\activate (Mac)
+               (or)
+       venv\Scripts\activate
+
+       (mac)export OPENAI_API_KEY=
+       (windows)set OPENAI_API_KEY=
+       
+    > uvicorn main1:app --reload
+
+3) run frontend (new terminal) (terminal-2)
+        > cd frontend
+        > npm install
+        > npm run dev
 
 
 
