@@ -1,110 +1,156 @@
 """
-    PdfReader is the predefined class
-    PdfReader used to read data from pdf file
+PdfReader is used to read data from pdf file
 """
 import os
 from pypdf import PdfReader
 
 """
-    SentenceTransformer is the predefined class
-    SentenceTransformer used to implement the emdebbings
+SentenceTransformer is used to generate embeddings
 """
 from sentence_transformers import SentenceTransformer
 
-# used to connect to vectordb
 import chromadb
-
-# OpenAI- used to generate output
 from openai import OpenAI
 
-# load the model
+# Load embedding model only once
 model = SentenceTransformer("all-MiniLM-L6-v2")
 
-
-# create the table (collection)
-# client = chromadb.Client()
-# collection = client.create_collection("pdf_data")
-# client = chromadb.HttpClient(host="localhost", port=8001)
-# collection = client.get_or_create_collection("pdf_data")
+# Chroma persistent storage
 CHROMA_DIR = os.getenv("CHROMA_DIR", "/app/chroma_data")
+
+# Create directory if missing
+os.makedirs(CHROMA_DIR, exist_ok=True)
+
+# Connect local persistent DB
 client = chromadb.PersistentClient(path=CHROMA_DIR)
-collection = client.get_or_create_collection("pdf_data")
+
+# Create collection if not exists
+collection = client.get_or_create_collection(
+    name="pdf_data"
+)
 
 
-# read pdf file
+# ---------------------------
+# Read PDF
+# ---------------------------
 def read_pdf(pdf_path):
     reader = PdfReader(pdf_path)
+
     text = ""
 
     for page in reader.pages:
-        extracted_text = page.extract_text()
-        if extracted_text:
-            text += extracted_text
+        page_text = page.extract_text()
+
+        if page_text:
+            text += page_text + "\n"
 
     return text
 
 
-# chunk
-def chunk_text(text):
-    chunk_size = 500
+# ---------------------------
+# Create chunks
+# ---------------------------
+def chunk_text(text, chunk_size=500):
+
     chunks = []
 
     for i in range(0, len(text), chunk_size):
+
         chunk = text[i:i + chunk_size]
-        chunks.append(chunk)
+
+        if chunk.strip():
+            chunks.append(chunk)
 
     return chunks
 
 
-# embeddings
+# ---------------------------
+# Create embeddings
+# ---------------------------
 def create_embeddings(chunks):
-    embeddings = model.encode(chunks)
+
+    embeddings = model.encode(
+        chunks,
+        convert_to_numpy=True
+    )
+
     return embeddings
 
 
-# store in db
+# ---------------------------
+# Store in ChromaDB
+# ---------------------------
 def store_in_chromadb(chunks, embeddings):
-    collection.add(
-        documents=chunks,
-        embeddings=embeddings.tolist(),
-        ids=[str(i) for i in range(len(chunks))]
-    )
-    return "Data Stored Successfully !!!"
+
+    try:
+
+        ids = [f"chunk_{i}" for i in range(len(chunks))]
+
+        collection.add(
+            documents=chunks,
+            embeddings=embeddings.tolist(),
+            ids=ids
+        )
+
+        return "Data stored successfully"
+
+    except Exception as e:
+
+        return f"Store error: {str(e)}"
 
 
-# search
+# ---------------------------
+# Search
+# ---------------------------
 def search_query(question):
-    query_embedding = model.encode([question])
+
+    query_embedding = model.encode(
+        [question],
+        convert_to_numpy=True
+    )
+
     results = collection.query(
         query_embeddings=query_embedding.tolist(),
         n_results=2
     )
+
     return results
 
 
-# generate output
+# ---------------------------
+# Generate answer
+# ---------------------------
 def generate_answer(question, context):
-    #✅ Load API key from environment variable (NEVER hardcode it)
+
     api_key = os.getenv("OPENAI_API_KEY")
+
     if not api_key:
         raise RuntimeError(
-            "OPENAI_API_KEY environment variable is not set. "
-            "Set it in your .env file or system environment."
+            "OPENAI_API_KEY environment variable not found"
         )
 
-    openai_client = OpenAI(api_key=api_key)
-    
-    prompt = f"""
-    Answer the question using below context only
-    Context:
-    {context}
-    Question:
-    {question}
-    """
-    response = openai_client.chat.completions.create(
-        model="gpt-4.1-mini",
-        messages=[{"role": "user", "content": prompt}]
+    client_openai = OpenAI(
+        api_key=api_key
     )
-    final_answer = response.choices[0].message.content
-    return final_answer
 
+    prompt = f"""
+Answer using only the provided context.
+
+Context:
+{context}
+
+Question:
+{question}
+"""
+
+    response = client_openai.chat.completions.create(
+        model="gpt-4.1-mini",
+        messages=[
+            {
+                "role":"user",
+                "content":prompt
+            }
+        ]
+    )
+
+    return response.choices[0].message.content

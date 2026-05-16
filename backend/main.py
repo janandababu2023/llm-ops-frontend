@@ -5,9 +5,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import UploadFile
 from fastapi import File
-# shutil is the predefined python library
-# shutil, used to receive pdf files and save to local path
+from contextlib import asynccontextmanager
 import shutil
+import os
+
 from rag import (
     read_pdf,
     chunk_text,
@@ -17,11 +18,33 @@ from rag import (
     generate_answer,
     collection
 )
+
+# ------------------------------------------
+# UPLOAD DIRECTORY
+# os.path.dirname(__file__) = /app/backend
+# so UPLOAD_DIR = /app/backend/uploads
+# Auto-created on startup if not exists
+# ------------------------------------------
+UPLOAD_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "uploads")
+
+# ------------------------------------------
+# LIFESPAN
+# Runs once on startup — creates uploads folder
+# automatically if it does not exist
+# ------------------------------------------
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+    print(f"✅ Upload directory ready: {UPLOAD_DIR}")
+    yield
+    print("🛑 Server shutting down...")
+
 # ------------------------------------------
 # CREATE FASTAPI APP
 # app - get,post,put,delete,head,trace,options,patch
 # ------------------------------------------
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
+
 # ------------------------------------------
 # ADD CORS MIDDLEWARE
 # ------------------------------------------
@@ -32,6 +55,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 # ------------------------------------------
 # HOME API
 # ------------------------------------------
@@ -40,15 +64,28 @@ def home():
     return {
         "message": "LLM RAG Project Running"
     }
+
+# ------------------------------------------
+# HEALTH CHECK API
+# Used by Docker HEALTHCHECK and load balancers
+# ------------------------------------------
+@app.get("/health")
+def health():
+    return {
+        "status": "ok"
+    }
+
 # ------------------------------------------
 # PDF UPLOAD API
 # ------------------------------------------
 @app.post("/upload-pdf/")
 async def upload_pdf(file: UploadFile = File(...)):
-    # Save uploaded PDF
-    pdf_path = f"../uploads/{file.filename}"
+    # Save uploaded PDF to dynamic uploads directory
+    pdf_path = os.path.join(UPLOAD_DIR, file.filename)
+
     with open(pdf_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
+
     # STEP 1 : READ PDF
     text = read_pdf(pdf_path)
     # STEP 2 : CHUNK TEXT
@@ -57,10 +94,12 @@ async def upload_pdf(file: UploadFile = File(...)):
     embeddings = create_embeddings(chunks)
     # STEP 4 : STORE IN CHROMADB
     store_in_chromadb(chunks, embeddings)
+
     return {
         "message": "PDF Uploaded Successfully",
         "total_chunks": len(chunks)
     }
+
 # ------------------------------------------
 # ASK QUESTION API
 # ------------------------------------------
@@ -81,7 +120,6 @@ def ask_question(question: str):
 # ------------------------------------------
 # VIEW CHROMADB DATA
 # ------------------------------------------
-
 @app.get("/view-data/")
 def view_data():
     data = collection.get(
