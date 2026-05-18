@@ -212,6 +212,13 @@ pipeline {
                         echo 'Install dependencies'
                         npm install
 
+                        echo 'Auto fetch EC2 Public IP'
+                        PUBLIC_IP=\$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)
+                        echo \"Public IP: \$PUBLIC_IP\"
+
+                        echo 'Create .env.production with current IP'
+                        echo \"VITE_API_URL=http://\$PUBLIC_IP:8000\" > .env.production
+
                         echo 'Build React app'
                         npm run build
 
