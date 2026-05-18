@@ -5,9 +5,9 @@
 // → Checkout
 // → Build Docker Image
 // → Push DockerHub
-// → Deploy EC2 (Backend)
+// → Deploy Backend EC2
 // → Deploy Frontend
-// → Cleanup Docker
+// → Cleanup
 // ------------------------------------------------------------
 
 pipeline {
@@ -24,9 +24,9 @@ pipeline {
 
     stages {
 
-        // --------------------------------------------------
-        // Clean workspace
-        // --------------------------------------------------
+        // ------------------------------------------------
+        // Clean Workspace
+        // ------------------------------------------------
         stage('Clean Workspace') {
             steps {
                 cleanWs()
@@ -34,24 +34,22 @@ pipeline {
             }
         }
 
-        // --------------------------------------------------
-        // Checkout latest code
-        // --------------------------------------------------
+        // ------------------------------------------------
+        // Checkout
+        // ------------------------------------------------
         stage('Checkout') {
             steps {
                 checkout scm
 
-                echo "✅ Latest code pulled"
-
                 sh '''
-                echo "Branch: ${BRANCH_NAME:-master}"
+                echo "Current Branch: ${BRANCH_NAME:-master}"
                 '''
             }
         }
 
-        // --------------------------------------------------
-        // Build Docker image
-        // --------------------------------------------------
+        // ------------------------------------------------
+        // Build Docker Image
+        // ------------------------------------------------
         stage('Build Docker Image') {
 
             when {
@@ -64,22 +62,22 @@ pipeline {
             steps {
 
                 sh '''
-                    echo "🔨 Building Docker Image..."
+                echo "🔨 Building Docker image..."
 
-                    docker build \
-                    -t ${DOCKERHUB_USER}/${IMAGE_NAME}:${IMAGE_TAG} \
-                    -t ${DOCKERHUB_USER}/${IMAGE_NAME}:latest \
-                    .
+                docker build \
+                -t ${DOCKERHUB_USER}/${IMAGE_NAME}:${IMAGE_TAG} \
+                -t ${DOCKERHUB_USER}/${IMAGE_NAME}:latest \
+                .
 
-                    echo "✅ Docker build completed"
+                echo "✅ Build completed"
                 '''
             }
         }
 
-        // --------------------------------------------------
-        // Push Docker image
-        // --------------------------------------------------
-        stage('Push to Docker Hub') {
+        // ------------------------------------------------
+        // Push DockerHub
+        // ------------------------------------------------
+        stage('Push DockerHub') {
 
             when {
                 anyOf {
@@ -92,37 +90,37 @@ pipeline {
 
                 withCredentials([
                     usernamePassword(
-                    credentialsId:'dockerhub-creds',
-                    usernameVariable:'DH_USER',
-                    passwordVariable:'DH_PASS'
+                        credentialsId:'dockerhub-creds',
+                        usernameVariable:'DH_USER',
+                        passwordVariable:'DH_PASS'
                     )
                 ]) {
 
                     sh '''
-                        echo "📦 Docker Login"
+                    echo "📦 Docker Login"
 
-                        echo "$DH_PASS" | docker login \
-                        -u "$DH_USER" \
-                        --password-stdin
+                    echo "$DH_PASS" | docker login \
+                    -u "$DH_USER" \
+                    --password-stdin
 
-                        echo "📤 Pushing image..."
+                    echo "📤 Pushing images..."
 
-                        docker push ${DOCKERHUB_USER}/${IMAGE_NAME}:${IMAGE_TAG}
+                    docker push ${DOCKERHUB_USER}/${IMAGE_NAME}:${IMAGE_TAG}
 
-                        docker push ${DOCKERHUB_USER}/${IMAGE_NAME}:latest
+                    docker push ${DOCKERHUB_USER}/${IMAGE_NAME}:latest
 
-                        docker logout
+                    docker logout
 
-                        echo "✅ Push completed"
+                    echo "✅ Push successful"
                     '''
                 }
             }
         }
 
-        // --------------------------------------------------
-        // Deploy Backend to EC2
-        // --------------------------------------------------
-        stage('Deploy to EC2') {
+        // ------------------------------------------------
+        // Deploy Backend
+        // ------------------------------------------------
+        stage('Deploy Backend') {
 
             when {
                 anyOf {
@@ -133,51 +131,52 @@ pipeline {
 
             steps {
 
-                sshagent(credentials: ['ec2-ssh-key']) {
+                sshagent(credentials:['ec2-ssh-key']) {
 
                     sh '''
-                    echo "🚀 Deploying Backend..."
+                    echo "🚀 Deploy Backend"
 
                     ssh -o StrictHostKeyChecking=no $EC2_HOST "
 
-                        echo 'Pull latest image'
+                    echo 'Remove stale image'
 
-                        docker pull ${DOCKERHUB_USER}/${IMAGE_NAME}:latest
+                    docker rmi ${DOCKERHUB_USER}/${IMAGE_NAME}:latest || true
 
-                        echo 'Stop old container'
+                    echo 'Pull latest image'
 
-                        docker stop llm-rag || true
-                        docker rm llm-rag || true
+                    docker pull ${DOCKERHUB_USER}/${IMAGE_NAME}:latest
 
-                        echo 'Run new container'
+                    echo 'Stop old container'
 
-                        docker run -d \
-                        --name llm-rag \
-                        --restart unless-stopped \
-                        -p 8000:8000 \
-                        -e OPENAI_API_KEY='${OPENAI_API_KEY}' \
-                        ${DOCKERHUB_USER}/${IMAGE_NAME}:latest
+                    docker stop llm-rag || true
+                    docker rm llm-rag || true
 
-                        echo 'Verify container'
+                    echo 'Run container'
 
-                        docker ps
+                    docker run -d \
+                    --name llm-rag \
+                    --restart unless-stopped \
+                    -p 8000:8000 \
+                    -e OPENAI_API_KEY='${OPENAI_API_KEY}' \
+                    ${DOCKERHUB_USER}/${IMAGE_NAME}:latest
 
-                        echo 'Cleanup old Docker data'
+                    echo 'Verify'
 
-                        docker system prune -af --volumes || true
+                    docker ps
+
+                    docker system prune -af --volumes || true
 
                     "
 
-                    echo "✅ Backend Deployment completed"
-
+                    echo "✅ Backend deployed"
                     '''
                 }
             }
         }
 
-        // --------------------------------------------------
-        // Deploy Frontend to EC2
-        // --------------------------------------------------
+        // ------------------------------------------------
+        // Deploy Frontend
+        // ------------------------------------------------
         stage('Deploy Frontend') {
 
             when {
@@ -189,58 +188,70 @@ pipeline {
 
             steps {
 
-                sshagent(credentials: ['ec2-ssh-key']) {
+                sshagent(credentials:['ec2-ssh-key']) {
 
                     sh '''
-                    echo "🚀 Deploying Frontend..."
+                    echo "🚀 Deploy Frontend"
 
                     ssh -o StrictHostKeyChecking=no $EC2_HOST "
 
-                        echo 'Install pm2 if not exists'
-                        npm list -g pm2 || sudo npm install -g pm2
+                    echo 'Install PM2'
+                    npm list -g pm2 || sudo npm install -g pm2
 
-                        echo 'Go to frontend directory'
-                        cd /home/ubuntu/llm-ops-frontend/frontend
+                    echo 'Go frontend'
+                    cd /home/ubuntu/llm-ops-frontend/frontend
 
-                        echo 'Pull latest code'
-                        git fetch origin master
-                        git reset --hard origin/master
+                    echo 'Pull latest code'
 
-                        echo 'Clean old build'
-                        rm -rf node_modules package-lock.json dist
+                    git fetch origin master
+                    git reset --hard origin/master
 
-                        echo 'Install dependencies'
-                        npm install
+                    echo 'Remove old build'
 
-                        echo 'Extract Public IP from EC2_HOST'
-                        PUBLIC_IP=\$(echo '${EC2_HOST}' | cut -d'@' -f2)
-                        echo \"Public IP: \$PUBLIC_IP\"
+                    rm -rf node_modules package-lock.json dist
 
-                        echo 'Create .env.production with current IP'
-                        echo \"VITE_API_URL=http://\$PUBLIC_IP:8000\" > .env.production
+                    echo 'Install packages'
 
-                        echo 'Build React app'
-                        npm run build
+                    npm install
 
-                        echo 'Restart frontend server'
-                        pm2 delete frontend || true
-                        pm2 serve dist 3000 --spa --name frontend
-                        pm2 save
+                    echo 'Detect Public IP'
+
+                    PUBLIC_IP=\$(curl -s ifconfig.me)
+
+                    echo \"Detected IP: \$PUBLIC_IP\"
+
+                    echo 'Create env'
+
+                    echo \"VITE_API_URL=http://\$PUBLIC_IP:8000\" > .env.production
+
+                    echo 'Verify env file'
+
+                    cat .env.production
+
+                    echo 'Build frontend'
+
+                    npm run build
+
+                    echo 'Restart PM2'
+
+                    pm2 delete frontend || true
+
+                    pm2 serve dist 3000 --spa --name frontend
+
+                    pm2 save
 
                     "
 
-                    echo "✅ Frontend Deployment completed"
-
+                    echo "✅ Frontend deployed"
                     '''
                 }
             }
         }
-
     }
 
-    // --------------------------------------------------
-    // Post Actions
-    // --------------------------------------------------
+    // ------------------------------------------------
+    // Cleanup
+    // ------------------------------------------------
 
     post {
 
@@ -255,11 +266,10 @@ pipeline {
         always {
 
             sh '''
-                echo "🧹 Cleaning Docker"
+            echo "🧹 Cleanup"
 
-                docker system prune -af --volumes || true
-
-                docker builder prune -af || true
+            docker system prune -af --volumes || true
+            docker builder prune -af || true
             '''
         }
     }
