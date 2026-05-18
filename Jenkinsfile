@@ -6,7 +6,7 @@
 // → Build Docker Image
 // → Push DockerHub
 // → Deploy EC2 (Backend)
-// → Deploy Frontend  -added by Claude
+// → Deploy Frontend
 // → Cleanup Docker
 // ------------------------------------------------------------
 
@@ -196,11 +196,15 @@ pipeline {
 
                     ssh -o StrictHostKeyChecking=no $EC2_HOST "
 
+                        echo 'Install pm2 if not exists'
+                        npm list -g pm2 || sudo npm install -g pm2
+
                         echo 'Go to frontend directory'
                         cd /home/ubuntu/llm-ops-frontend/frontend
 
                         echo 'Pull latest code'
-                        git pull origin master
+                        git fetch origin master
+                        git reset --hard origin/master
 
                         echo 'Clean old build'
                         rm -rf node_modules package-lock.json dist
