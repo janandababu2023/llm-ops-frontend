@@ -1,0 +1,30 @@
+services:
+  backend:
+    image: excelr/llm-rag-app:latest
+    container_name: llm-rag-backend
+    restart: unless-stopped
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      CHROMA_DIR: /app/chroma_data
+    volumes:
+      - ./chroma_data:/app/chroma_data
+      - ./uploads:/app/uploads
+    expose:
+      - "8000"
+    networks:
+      - app-net
+
+  frontend:
+    image: excelr/llm-rag-frontend:latest
+    container_name: llm-rag-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - app-net
+
+networks:
+  app-net:
+    driver: bridge

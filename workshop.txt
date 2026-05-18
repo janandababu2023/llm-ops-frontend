@@ -1,0 +1,29 @@
+1) navigate to backend
+
+2) create and activate environment
+
+        > python3 -m venv venv
+        > source venv/bin/activate
+
+3) install depenedencies
+        > pip install -r requirements.txt
+
+4) set OPENAI_API_KEY key
+
+      
+
+5) start uvicorn server (uvicorn server, used to run api calls)
+
+        > uvicorn main1:app --reload
+
+6) switch to frontend (new terminal) (reactjs + tailwind css)
+
+        > cd frontend
+
+7) install depenedencies
+
+        > npm install
+
+8) launch frontend
+
+        > npm run dev

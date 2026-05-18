@@ -7,10 +7,9 @@ import ReactMarkdown from 'react-markdown'
 import { uploadPdf, askQuestion, viewData, healthCheck } from './api'
 
 export default function App() {
-  // ───────── State ─────────
   const [file, setFile] = useState(null)
   const [uploading, setUploading] = useState(false)
-  const [uploadStatus, setUploadStatus] = useState(null) // { type, message, chunks }
+  const [uploadStatus, setUploadStatus] = useState(null)
   const [chunksLoaded, setChunksLoaded] = useState(0)
 
   const [question, setQuestion] = useState('')
@@ -20,7 +19,6 @@ export default function App() {
   const [backendOnline, setBackendOnline] = useState(null)
   const scrollRef = useRef(null)
 
-  // ───────── Effects ─────────
   useEffect(() => {
     healthCheck()
       .then(() => setBackendOnline(true))
@@ -36,12 +34,9 @@ export default function App() {
     try {
       const data = await viewData()
       setChunksLoaded(data.total_chunks || 0)
-    } catch {
-      /* ignore */
-    }
+    } catch { /* ignore */ }
   }
 
-  // ───────── Handlers ─────────
   async function handleUpload(e) {
     e?.preventDefault()
     if (!file) return
@@ -85,11 +80,9 @@ export default function App() {
     setMessages([])
   }
 
-  // ───────── UI ─────────
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-brand-50">
-      {/* HEADER */}
-      <header className="border-b border-slate-200/70 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
+    <div className="min-h-screen">
+      <header className="border-b border-slate-200/70 bg-white/70 backdrop-blur-md sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center shadow-md">
@@ -110,9 +103,7 @@ export default function App() {
         </div>
       </header>
 
-      {/* MAIN */}
       <main className="max-w-6xl mx-auto px-6 py-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* LEFT — Upload */}
         <section className="lg:col-span-1 space-y-6">
           <div className="card p-6">
             <div className="flex items-center gap-2 mb-1">
@@ -176,10 +167,8 @@ export default function App() {
           </div>
         </section>
 
-        {/* RIGHT — Chat */}
         <section className="lg:col-span-2">
           <div className="card flex flex-col h-[calc(100vh-200px)] min-h-[500px]">
-            {/* Chat header */}
             <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <FileText className="w-5 h-5 text-brand-600" />
@@ -195,7 +184,6 @@ export default function App() {
               )}
             </div>
 
-            {/* Messages */}
             <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 py-6 scroll-area">
               {messages.length === 0 && !asking && <EmptyState />}
               <div className="space-y-4">
@@ -204,7 +192,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* Input */}
             <form onSubmit={handleAsk} className="p-4 border-t border-slate-200 bg-slate-50/50">
               <div className="flex gap-2">
                 <input
@@ -232,15 +219,11 @@ export default function App() {
   )
 }
 
-// ─────────────────────────────────────────────────────────────────
-// Sub-components
-// ─────────────────────────────────────────────────────────────────
-
 function StatusPill({ online }) {
   if (online === null) {
     return (
       <span className="inline-flex items-center gap-1.5 text-xs text-slate-500">
-        <span className="w-2 h-2 rounded-full bg-slate-300 animate-pulse-slow" />
+        <span className="w-2 h-2 rounded-full bg-slate-300 animate-pulse" />
         Connecting…
       </span>
     )

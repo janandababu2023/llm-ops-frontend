@@ -126,7 +126,8 @@ def generate_answer(question, context):
 
     if not api_key:
         raise RuntimeError(
-            "OPENAI_API_KEY environment variable not found"
+            "OPENAI_API_KEY environment variable is not set. "
+            "Set it in your .env file or system environment."
         )
 
     client_openai = OpenAI(

@@ -1,9 +1,5 @@
 @import "tailwindcss";
 
-/* ──────────────────────────────────────────────────────────────
-   Design tokens — Tailwind v4 reads these as utility colors.
-   Use them as: bg-brand-600, text-brand-700, etc.
-   ────────────────────────────────────────────────────────────── */
 @theme {
   --color-brand-50:  #eef2ff;
   --color-brand-100: #e0e7ff;
@@ -17,7 +13,6 @@
   --font-sans: 'Inter', system-ui, sans-serif;
 }
 
-/* Base styles */
 html {
   font-family: 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -32,9 +27,6 @@ body {
   min-height: 100vh;
 }
 
-/* ──────────────────────────────────────────────────────────────
-   Reusable component classes
-   ────────────────────────────────────────────────────────────── */
 .btn-primary {
   @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg
          bg-brand-600 text-white font-medium shadow-sm
@@ -59,13 +51,11 @@ body {
          transition-all;
 }
 
-/* Scrollbar styling */
 .scroll-area::-webkit-scrollbar { width: 6px; }
 .scroll-area::-webkit-scrollbar-track { background: transparent; }
 .scroll-area::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
 .scroll-area::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-/* Typing-dot animation */
 @keyframes typing {
   0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
   30%           { transform: translateY(-6px); opacity: 1; }
@@ -74,7 +64,6 @@ body {
 .typing-dot:nth-child(2) { animation-delay: 0.2s; }
 .typing-dot:nth-child(3) { animation-delay: 0.4s; }
 
-/* Subtle float-in animation for cards on first render */
 @keyframes float-in {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
