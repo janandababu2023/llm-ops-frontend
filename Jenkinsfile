@@ -212,8 +212,8 @@ pipeline {
                         echo 'Install dependencies'
                         npm install
 
-                        echo 'Auto fetch EC2 Public IP'
-                        PUBLIC_IP=\$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)
+                        echo 'Extract Public IP from EC2_HOST'
+                        PUBLIC_IP=\$(echo '${EC2_HOST}' | cut -d'@' -f2)
                         echo \"Public IP: \$PUBLIC_IP\"
 
                         echo 'Create .env.production with current IP'
