@@ -214,20 +214,16 @@ pipeline {
 
                     npm install
 
-                    echo 'Detect Public IP'
+                    echo 'Detect EC2 Public IP'
 
-                    PUBLIC_IP=\$(curl -s ifconfig.me)
+PUBLIC_IP=\$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)
 
-                    echo \"Detected IP: \$PUBLIC_IP\"
+echo \"Detected IP: \$PUBLIC_IP\"
 
-                    echo 'Create env'
+echo \"VITE_API_URL=http://\$PUBLIC_IP:8000\" > .env.production
 
-                    echo \"VITE_API_URL=http://\$PUBLIC_IP:8000\" > .env.production
-
-                    echo 'Verify env file'
-
-                    cat .env.production
-
+echo 'Verify env'
+cat .env.production
                     echo 'Build frontend'
 
                     npm run build
