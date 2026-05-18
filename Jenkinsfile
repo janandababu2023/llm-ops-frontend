@@ -51,7 +51,6 @@ pipeline {
         // Build Docker Image
         // --------------------------------------------
         stage('Build Docker Image') {
-
             when {
                 anyOf {
                     branch 'master'
@@ -60,7 +59,6 @@ pipeline {
             }
 
             steps {
-
                 sh '''
                 echo "🔨 Building Docker image..."
 
@@ -97,13 +95,13 @@ pipeline {
                 ]) {
 
                     sh '''
-                    echo "📦 Docker login"
+                    echo "📦 Docker Login"
 
                     echo "$DH_PASS" | docker login \
                     -u "$DH_USER" \
                     --password-stdin
 
-                    echo "📤 Pushing Docker images"
+                    echo "📤 Pushing images"
 
                     docker push ${DOCKERHUB_USER}/${IMAGE_NAME}:${IMAGE_TAG}
                     docker push ${DOCKERHUB_USER}/${IMAGE_NAME}:latest
@@ -143,11 +141,11 @@ pipeline {
                     echo 'Pull latest image'
                     docker pull ${DOCKERHUB_USER}/${IMAGE_NAME}:latest
 
-                    echo 'Stop old container'
+                    echo 'Stop existing container'
                     docker stop llm-rag || true
                     docker rm llm-rag || true
 
-                    echo 'Run backend'
+                    echo 'Start backend'
 
                     docker run -d \
                     --name llm-rag \
@@ -156,7 +154,7 @@ pipeline {
                     -e OPENAI_API_KEY='${OPENAI_API_KEY}' \
                     ${DOCKERHUB_USER}/${IMAGE_NAME}:latest
 
-                    echo 'Verify container'
+                    echo 'Verify backend'
                     docker ps
 
                     docker system prune -af --volumes || true
@@ -193,7 +191,7 @@ pipeline {
                     echo 'Install PM2'
                     npm list -g pm2 || sudo npm install -g pm2
 
-                    echo 'Go frontend folder'
+                    echo 'Go to frontend'
                     cd /home/ubuntu/llm-ops-frontend/frontend
 
                     echo 'Pull latest code'
@@ -203,12 +201,18 @@ pipeline {
                     echo 'Clean previous build'
                     rm -rf node_modules package-lock.json dist
 
-                    echo 'Install dependencies'
+                    echo 'Install packages'
                     npm install
 
-                    echo 'Detect EC2 Public IP'
+                    echo 'Get EC2 Public IP (IMDSv2)'
 
-                    PUBLIC_IP=\$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)
+                    TOKEN=\$(curl -X PUT \
+                    'http://169.254.169.254/latest/api/token' \
+                    -H 'X-aws-ec2-metadata-token-ttl-seconds: 21600' -s)
+
+                    PUBLIC_IP=\$(curl \
+                    -H "X-aws-ec2-metadata-token: \$TOKEN" \
+                    http://169.254.169.254/latest/meta-data/public-ipv4 -s)
 
                     echo \"Detected IP: \$PUBLIC_IP\"
 
@@ -240,7 +244,7 @@ pipeline {
     }
 
     // --------------------------------------------
-    // Post cleanup
+    // Cleanup
     // --------------------------------------------
 
     post {
