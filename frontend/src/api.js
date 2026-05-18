@@ -1,5 +1,3 @@
-// All API calls go through /api/* — Nginx (prod) or Vite proxy (dev)
-// forwards them to the FastAPI backend on port 8000.
 const API_BASE = '/api'
 
 export async function uploadPdf(file) {
